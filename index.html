@@ -436,6 +436,11 @@ section:not([hidden]) .card+.card{animation-delay:.16s}
 @keyframes hop{40%{transform:translateY(-12px) rotate(-6deg)}70%{transform:translateY(0) rotate(4deg)}}
 @keyframes droop{to{transform:scale(1,.92) rotate(-4deg)}}
 @keyframes wob{50%{transform:rotate(5deg)}}
+.mascot .mrays{animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mascot[data-m="happy"] .mrays{animation:spin 2s linear infinite}
+.mascot[data-m="sad"] .mrays{animation:none;opacity:.3}
+.mascot[data-m="think"] .mrays{animation:spin 5s linear infinite;opacity:.5}
 .mpop{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:70;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:8px 18px 8px 8px;border-radius:999px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 16px 36px -12px var(--shadow);font-weight:800;white-space:nowrap;pointer-events:none;animation:mpopIn 2.3s cubic-bezier(.2,1.2,.4,1) both}
 .mpop .mascot{width:48px;height:48px;flex:none}
 @keyframes mpopIn{0%{opacity:0;transform:translate(-50%,30px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1)}85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-10px)}}
@@ -2660,17 +2665,55 @@ const MASCOT_SAY = {
   sad: S(["Ничего, попробуй ещё!", "Почти! Ещё разок."], ["Ҳечгап не, боз кӯшиш кун!", "Қариб ки! Боз як бор."], ["It's okay, try again!", "Almost! One more go."])
 };
 function mascotSVG() {
-  let pts = ""; for (let i = 0; i < 16; i++) { const a = (Math.PI * 2 * i) / 16 - Math.PI / 2, r = i % 2 ? 33 : 47; pts += (50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1) + " "; }
-  return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-    '<g class="mb"><polygon points="' + pts + '" fill="url(#lgGold)" stroke="url(#lgGold)" stroke-width="7" stroke-linejoin="round"/>' +
-    '<circle cx="32" cy="58" r="5" fill="#ff8a5c" opacity=".55"/><circle cx="68" cy="58" r="5" fill="#ff8a5c" opacity=".55"/>' +
-    '<g class="eyes"><g class="eye" style="transform-origin:38px 47px"><ellipse cx="38" cy="47" rx="6" ry="7.500" fill="#14213d"/><circle cx="40" cy="44.500" r="2.200" fill="#fff"/></g>' +
-    '<g class="eye" style="transform-origin:62px 47px"><ellipse cx="62" cy="47" rx="6" ry="7.500" fill="#14213d"/><circle cx="64" cy="44.500" r="2.200" fill="#fff"/></g></g>' +
-    '<g class="happyeyes"><path d="M31 49q7-11 14 0M55 49q7-11 14 0" fill="none" stroke="#14213d" stroke-width="4" stroke-linecap="round"/></g>' +
-    '<path class="m m-idle" d="M42 62q8 7 16 0" fill="none" stroke="#14213d" stroke-width="3.500" stroke-linecap="round"/>' +
-    '<path class="m m-happy" d="M38 60q12 16 24 0z" fill="#14213d"/>' +
-    '<path class="m m-sad" d="M43 68q7-7 14 0" fill="none" stroke="#14213d" stroke-width="3.500" stroke-linecap="round"/>' +
-    '<ellipse class="m m-think" cx="50" cy="65" rx="4" ry="5" fill="#14213d"/></g></svg>';
+  /* 16-конечная звёздочка */
+  let pts = ""; for (let i = 0; i < 16; i++) { const a = (Math.PI * 2 * i) / 16 - Math.PI / 2, r = i % 2 ? 32 : 46; pts += (50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1) + " "; }
+  /* 4 лучика вокруг */
+  const rays = [0,90,180,270].map(deg => {
+    const a = deg * Math.PI / 180, r0 = 49, r1 = 56;
+    return '<line x1="' + (50+r0*Math.cos(a)).toFixed(1) + '" y1="' + (50+r0*Math.sin(a)).toFixed(1) + '" x2="' + (50+r1*Math.cos(a)).toFixed(1) + '" y2="' + (50+r1*Math.sin(a)).toFixed(1) + '" stroke="url(#lgGold)" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>';
+  }).join("");
+  return '<svg viewBox="-8 -8 116 116" aria-hidden="true">' +
+    '<defs><radialGradient id="mglow" cx=".45" cy=".35" r=".6"><stop offset="0" stop-color="#FFFDE0"/><stop offset="1" stop-color="#FFB300"/></radialGradient>' +
+    '<radialGradient id="mblush" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff8a5c" stop-opacity=".6"/><stop offset="1" stop-color="#ff8a5c" stop-opacity="0"/></radialGradient></defs>' +
+    '<g class="mrays" style="transform-origin:50px 50px">' + rays + '</g>' +
+    '<g class="mb">' +
+    '<polygon points="' + pts + '" fill="url(#mglow)" stroke="url(#lgGold)" stroke-width="5" stroke-linejoin="round"/>' +
+    '<ellipse cx="38" cy="40" rx="11" ry="7" fill="#fff" opacity=".25"/>' + /* блик */
+    '<circle cx="29" cy="56" r="7" fill="url(#mblush)"/><circle cx="71" cy="56" r="7" fill="url(#mblush)"/>' + /* румянец */
+    /* обычные глаза */
+    '<g class="eyes">' +
+      '<g class="eye" style="transform-origin:37px 46px">' +
+        '<ellipse cx="37" cy="46" rx="6" ry="7" fill="#14213d"/>' +
+        '<circle cx="39.5" cy="43.5" r="2.5" fill="#fff"/>' +
+        '<circle cx="39.5" cy="43.5" r="1" fill="#fff" opacity=".6"/>' +
+      '</g>' +
+      '<g class="eye" style="transform-origin:63px 46px">' +
+        '<ellipse cx="63" cy="46" rx="6" ry="7" fill="#14213d"/>' +
+        '<circle cx="65.5" cy="43.5" r="2.5" fill="#fff"/>' +
+        '<circle cx="65.5" cy="43.5" r="1" fill="#fff" opacity=".6"/>' +
+      '</g>' +
+    '</g>' +
+    /* счастливые глаза (дуги) */
+    '<g class="happyeyes"><path d="M30 48q7-12 14 0M56 48q7-12 14 0" fill="none" stroke="#14213d" stroke-width="4" stroke-linecap="round"/>' +
+      '<path d="M30 48q7-12 14 0M56 48q7-12 14 0" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".35"/>' + /* блик на счастливых глазах */
+    '</g>' +
+    /* рты */
+    '<path class="m m-idle" d="M41 62q9 7 18 0" fill="none" stroke="#14213d" stroke-width="3.5" stroke-linecap="round"/>' +
+    '<path class="m m-happy" d="M37 60q13 18 26 0" fill="#14213d"/>' +
+    '<path class="m m-sad" d="M42 68q8-7 16 0" fill="none" stroke="#14213d" stroke-width="3.5" stroke-linecap="round"/>' +
+    /* думалка: три точки */
+    '<g class="m m-think">' +
+      '<circle cx="43" cy="66" r="2.8" fill="#14213d"/>' +
+      '<circle cx="50" cy="66" r="2.8" fill="#14213d"/>' +
+      '<circle cx="57" cy="66" r="2.8" fill="#14213d"/>' +
+    '</g>' +
+    /* пузырьки мысли */
+    '<g class="m m-think" opacity=".75">' +
+      '<circle cx="68" cy="27" r="5" fill="#fff"/>' +
+      '<circle cx="74" cy="18" r="3.5" fill="#fff"/>' +
+      '<circle cx="78" cy="11" r="2.3" fill="#fff"/>' +
+    '</g>' +
+    '</g></svg>';
 }
 function mascotMood(m) {
   document.querySelectorAll(".mascot").forEach((e) => { e.dataset.m = m; });
